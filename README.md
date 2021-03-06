@@ -33,13 +33,16 @@ DRACOON is a cloud storage product / service (SaaS) by DRACOON GmbH (http://drac
 DRACOON API documentation can be found here (Swagger UI):
 https://dracoon.team/api/
 
+Typer serves as the framework for the CLI, Pillow and resizeimage to handle image resizes and the requests based DRACOON module to authenticate in DRACOON.
 
 ### Built With
 
 * [Python 3.7.3](https://www.python.org/)
 * [requests module](https://requests.readthedocs.io/en/master/)
 * [Typer](https://typer.tiangolo.com/)
-* [Pillow] (https://pillow.readthedocs.io/)
+* [Pillow](https://pillow.readthedocs.io/)
+* [resizeimage](https://github.com/VingtCinq/python-resize-image)
+* [DRACOON-PYTHON-API](https://github.com/unbekanntes-pferd/DRACOON-PYTHON-API)
 
 <!-- GETTING STARTED -->
 ## Getting Started
