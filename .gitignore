@@ -1,0 +1,10 @@
+# ignore Python cache and build files for package
+
+/setup.py
+/__pycache__
+/build
+/dist
+/._.DS_Store
+/.DS_Store
+/.venv
+/util/__pycache__
