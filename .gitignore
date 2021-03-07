@@ -2,9 +2,14 @@
 
 /setup.py
 /__pycache__
+/dracoonsprayer/__pycache__
+/dracoonsprayer/util/models/__pycache__
 /build
 /dist
 /._.DS_Store
 /.DS_Store
 /.venv
-/util/__pycache__
+/dracoonsprayer/util/__pycache__
+/dracoonsprayer.egg-info
+/dracoon_sprayer.egg-info
+/dracoonsprayer/dracoonsprayer.egg-info
