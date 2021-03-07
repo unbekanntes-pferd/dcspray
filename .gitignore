@@ -1,5 +1,5 @@
 # ignore Python cache and build files for package
-
+/.vscode
 /setup.py
 /__pycache__
 /dracoonsprayer/__pycache__
