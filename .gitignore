@@ -13,3 +13,5 @@
 /dracoonsprayer.egg-info
 /dracoon_sprayer.egg-info
 /dracoonsprayer/dracoonsprayer.egg-info
+branding_dev.py
+cli_dev.py

@@ -7,6 +7,7 @@ from PIL import Image
 from resizeimage import resizeimage
 import typer
 import os
+import zipfile
 
 # helper to validate DRACOON version string
 def validate_dracoon_version(version_string: str):
@@ -50,17 +51,26 @@ def validate_dracoon_url(dracoon_url: str):
         return False
 
 # get public branding
-def get_branding(url: str):
+def get_branding(url: str, on_prem_source: bool):
+
+    dracoon_url = 'https://dracoon.team'
 
     # remove trailing / if present
     if url[-1] == '/':
         url = url[:-1]
 
-    # public branding API endpoint
-    api_url = url + '/branding/api/v1/public/branding'
+    headers = {
+        "accept": "application/json"
+    }
+
+    if on_prem_source: 
+        api_url =  dracoon_url + '/branding/api/v1/public/branding'
+        headers["Host"] = url[8:]
+    else:
+        api_url = url + '/branding/api/v1/public/branding'
 
     # only get branding if valid DRACOON URL 
-    if validate_dracoon_url(url):
+    if not on_prem_source and validate_dracoon_url(url):
         try:
             branding_response = get(api_url)
 
@@ -71,6 +81,18 @@ def get_branding(url: str):
         # return call response
         typer.echo(f'Downloaded branding from {url}.')
         return branding_response.json()
+
+    elif on_prem_source and validate_dracoon_url(dracoon_url):
+        try:
+            branding_response = get(api_url, headers=headers)
+
+        # handle connection errors
+        except RequestException as e:
+            return None
+
+        # return call response
+        typer.echo(f'Downloaded on prem branding for {url}.')
+        return branding_response.json()   
 
 
 # function to download all branding images 
@@ -159,6 +181,26 @@ def delete_images(path: str = None):
     for image in images:
         os.remove(image)
         typer.echo(f'Temporary file {image} deleted.')
+
+def delete_zip_images(path: str = None):
+
+    images = ['webLogo_large.png' ,'webSplashImage_large.png', 
+    'squaredLogo_large.png', 'appSplashImage_large.png', 'appLogo_large.png']
+
+    for image in images:
+        if path: image = path + '/' + image
+
+    for image in images:
+        os.remove(image)
+        typer.echo(f'Temporary file {image} deleted.')
+
+def delete_branding_json(path: str = None):
+
+    branding_json = 'branding.json'
+
+    if path: branding_json = path + '/' + branding_json
+    os.remove(branding_json)
+    typer.echo(f'Temporary file {branding_json} deleted.')
     
     
 # PUT request to update branding
@@ -185,6 +227,111 @@ def update_branding(url: str, branding: BrandingUpload, auth_header):
             typer.echo(f'An error ocurred updating the branding.')
             typer.echo(f'{update_response.text}')
             return None
+
+def zip_branding(source_url: str, zip_name: str, on_prem_source: bool):
+
+    branding_json = get_branding(source_url, on_prem_source)
+    download_images(branding_json)
+
+    parsed_colors = []
+
+    # parse colors (only normal color required)
+    for color in branding_json['colors']:
+        for details in color['colorDetails']:
+            if details['type'] == 'normal':
+                parsed_colors.append({
+                        'type': color['type'],
+                        'colorDetails': [details]
+                    })
+
+    # create payload to dump update ready json (without image ids) to file
+    parsed_branding = {
+            'appearanceLoginBox': branding_json['appearanceLoginBox'],
+            'colorizeHeader': branding_json['colorizeHeader'],
+            'colors': parsed_colors,
+            'emailContact':branding_json['emailContact'],
+            'emailSender': branding_json['emailSender'],
+            'imprintUrl': branding_json['imprintUrl'],
+            'positionLoginBox': branding_json['positionLoginBox'],
+            'privacyUrl': branding_json['privacyUrl'],
+            'productName': branding_json['productName'],
+            'supportUrl': branding_json['supportUrl'],
+            'texts': branding_json['texts']
+        }
+
+   # dump json to file
+    with open('branding.json', 'w') as jsonfile:
+        json.dump(parsed_branding, jsonfile)
+
+    images = ['webLogo' ,'webSplashImage', 'squaredLogo', 'appSplashImage', 'appLogo']
+
+    with zipfile.ZipFile(zip_name, 'w', compression=zipfile.ZIP_DEFLATED) as branding_zip:
+        branding_zip.write('branding.json')
+        for image in images:
+            branding_zip.write(image + '_large.png')
+
+    delete_images()
+    delete_branding_json()
+    success_txt = typer.style('SUCCESS: ', fg=typer.colors.GREEN, bold=True)
+    typer.echo(f'{success_txt} Stored branding from {source_url} in file branding.zip')
+
+# function to upload branding from zip      
+def load_from_zip(zip_file: str, url: str, auth_header):
+
+    with zipfile.ZipFile('branding.zip', 'r') as branding_zip:
+        branding_files = branding_zip.namelist()
+        required_files = ['branding.json', 'webLogo_large.png', 'webSplashImage_large.png', 
+        'squaredLogo_large.png', 'appSplashImage_large.png', 'appLogo_large.png']
+
+        for file in required_files:
+            if file not in branding_files:
+                error_txt = typer.style('Format error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
+                typer.echo(f'{error_txt}Invalid branding zip file format.')  
+                raise SystemExit()
+       
+        # extract in cwd
+        branding_zip.extractall()
+    
+    # upload images
+    image_ids = upload_images(url, auth_header)
+
+    # load branding JSON
+    with open('branding.json') as json_file:
+        branding_json = json.load(json_file)
+
+    parsed_colors = []
+        
+    # parse colors (only normal color required)
+    for color in branding_json['colors']:
+        for details in color['colorDetails']:
+            if details['type'] == 'normal':
+                parsed_colors.append({
+                        'type': color['type'],
+                        'colorDetails': [details]
+                })
+
+    updated_branding = {
+            'appearanceLoginBox': branding_json['appearanceLoginBox'],
+            'colorizeHeader': branding_json['colorizeHeader'],
+            'colors': parsed_colors,
+            'emailContact':branding_json['emailContact'],
+            'emailSender': branding_json['emailSender'],
+            'images': image_ids,
+            'imprintUrl': branding_json['imprintUrl'],
+            'positionLoginBox': branding_json['positionLoginBox'],
+            'privacyUrl': branding_json['privacyUrl'],
+            'productName': branding_json['productName'],
+            'supportUrl': branding_json['supportUrl'],
+            'texts': branding_json['texts']
+        }
+
+    # send request to update branding
+    result = update_branding(url, updated_branding, auth_header)
+    delete_zip_images()
+    delete_branding_json()
+    success_txt = typer.style('SUCCESS: ', fg=typer.colors.GREEN, bold=True)
+    typer.echo(f'{success_txt} Sprayed source branding from {zip_file} to {url}.')
+
         
         
 
