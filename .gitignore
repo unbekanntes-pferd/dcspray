@@ -15,4 +15,5 @@
 /dracoonsprayer/dracoonsprayer.egg-info
 branding_dev.py
 cli_dev.py
+/tmp
 /tmp/*
