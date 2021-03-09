@@ -9,6 +9,7 @@ import typer
 import os
 import zipfile
 
+
 # helper to validate DRACOON version string
 def validate_dracoon_version(version_string: str):
     version_string = version_string[:4]
@@ -39,9 +40,13 @@ def validate_dracoon_url(dracoon_url: str):
             if version_response and 'restApiVersion' in version_response.json():
                 version_string = version_response.json()['restApiVersion']
             else: 
+                error_txt = typer.style('Connection error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
+                typer.echo(f'{error_txt} Incompatible DRACOON version.')  
                 return False
 
         except RequestException as e:
+            error_txt = typer.style('Connection error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
+            typer.echo(f'{error_txt} no connection to {dracoon_url} possible.')  
             return False
         
         # finalize by validating if compatible version (>= 4.19)
@@ -76,6 +81,8 @@ def get_branding(url: str, on_prem_source: bool):
 
         # handle connection errors
         except RequestException as e:
+            error_txt = typer.style('Connection error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
+            typer.echo(f'{error_txt} no connection to {dracoon_url} possible.')  
             return None
 
         # return call response
@@ -158,17 +165,35 @@ def upload_images(url: str, auth_header):
                 try:
                     upload_response = post(api_url + '?type=' + image, files=payload, headers=auth_header)
 
-                    image_id = {
+                    if upload_response.status_code == 200:
+
+                        image_id = {
                         'type': image,
                         'id': upload_response.json()['id']
-                    }
-                    image_ids.append(image_id)
-
+                        }
+                        image_ids.append(image_id)
+         
+                # handle connection errors
                 except RequestException as e:
+                    error_txt = typer.style('Connection error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
+                    typer.echo(f'{error_txt} no connection to {url} possible.')  
                     return None
             
-            return image_ids
+            if upload_response.status_code == 200:
 
+                return image_ids
+                
+            # handle missing config manager role    
+            elif upload_response.status_code == 403:
+                error_txt = typer.style('Error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
+                typer.echo(f'{error_txt} Config Manager role required ({upload_response.status_code}).')  
+            else:
+                error_txt = typer.style('Error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
+                typer.echo(f'{error_txt} {upload_response.status_code}')  
+                typer.echo(f'{error_txt} {upload_response.text}')  
+                return None
+
+                     
 def delete_images(path: str = None):
 
     images = ['webLogo_large.png' ,'webSplashImage_large.png', 
@@ -218,14 +243,16 @@ def update_branding(url: str, branding: BrandingUpload, auth_header):
         try:
             update_response = put(url=api_url, json=branding, headers=auth_header)
         except RequestException as e:
-
+            error_txt = typer.style('Connection error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
+            typer.echo(f'{error_txt} no connection to {url} possible.')  
             return None
 
         if update_response.status_code == 200:
             return update_response
         else:
-            typer.echo(f'An error ocurred updating the branding.')
-            typer.echo(f'{update_response.text}')
+            error_txt = typer.style('Error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
+            typer.echo(f'{error_txt} {update_response.status_code}')
+            typer.echo(f'{error_txt} {update_response.text}')  
             return None
 
 def zip_branding(source_url: str, zip_name: str, on_prem_source: bool):
@@ -329,10 +356,14 @@ def load_from_zip(zip_file: str, url: str, auth_header):
     result = update_branding(url, updated_branding, auth_header)
     delete_zip_images()
     delete_branding_json()
-    success_txt = typer.style('SUCCESS: ', fg=typer.colors.GREEN, bold=True)
-    typer.echo(f'{success_txt} Sprayed source branding from {zip_file} to {url}.')
 
-        
+    if result is not None:
+        success_txt = typer.style('SUCCESS: ', fg=typer.colors.GREEN, bold=True)
+        typer.echo(f'{success_txt} Sprayed source branding from {zip_file} to {url}.')
+    else:
+        error_txt = typer.style('Error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
+        typer.echo(f'{error_txt} Branding could not be sprayed to target.')
+   
         
 
     

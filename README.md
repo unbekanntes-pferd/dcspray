@@ -1,15 +1,6 @@
 
   <h3 align="center">DRACOON-BRANDING-SPRAYER</h3>
 
-  <p align="center">
-    Small CLI to copy DRACOON brandings (spray your source branding to the target)
-    <br />
-    <a href="https://github.com/unbekanntes-pferd/DRACOON-BRANDING-SPRAYER"><strong>Explore the docs »</strong></a>
-    <br />
-    <a href="https://github.com/unbekanntes-pferd/DRACOON-BRANDING-SPRAYER/issues">Report Bug</a>
-  </p>
-</p>
-
 <!-- TABLE OF CONTENTS -->
 ## Table of Contents
 
@@ -33,7 +24,7 @@ https://dracoon.team/api/
 
 Typer serves as the framework for the CLI, Pillow and resizeimage to handle image resizes and the requests based DRACOON module to authenticate in DRACOON.
 
-### Built With
+## Built With
 
 * [Python 3.7.3](https://www.python.org/)
 * [requests module](https://requests.readthedocs.io/en/master/)
@@ -56,7 +47,7 @@ pip install dracoon-sprayer
 
 
 
-### Prerequisites
+## Prerequisites
 
 You will need a working Python 3 installation - check your version:
 * Python
@@ -64,7 +55,7 @@ You will need a working Python 3 installation - check your version:
 python3 --version
 ```
 
-### Installation
+## Installation
 
 1. Install the package from PyPi
 ```
@@ -192,7 +183,7 @@ dracoon-sprayer save --zip-name NAME_AND_OPTIONAL_ZIP_PATH SOURCE_URL TARGET_URL
 ```
 
 #### Options overview
-
+* --zip-name – when provided, will use given path and name to store zip
 * --on-prem-source – when provided, will obtain branding from an on premises customer using DRACOON Cloud branding
 * --help – shows help text
 
