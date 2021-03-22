@@ -115,9 +115,24 @@ def download_images(branding: Branding, path: str = None):
                 # get only large size
                 if file['size'] == 'large':
                     image_response = get(file['url'], allow_redirects=True)
-                    filename = image['type'] + '_' + file['size'] + '.png'
+                    
+                    # get correct file ending for PNG or JPG
+                    mime_type = image_response.headers['Content-Type'].split('/')
+                    file_type = mime_type[1]
+                    if file_type == 'jpeg': file_type = 'jpg'
+                    if file_type == 'vnd.microsoft.icon': break
+                    filename = image['type'] + '_' + file['size'] + '.' + file_type
                     if path: filename = path + filename
                     open(filename, 'wb').write(image_response.content)
+
+                    # convert JPG to PNG 
+                    if file_type == 'jpg':
+                        with open(filename, 'rb') as f:
+                            with Image.open(f) as image:
+                                png_name = filename[:-3] + 'png'
+                                image.save(png_name)
+                        os.remove(filename)
+                        
 
     # resize webLogo_large.png
     filename = 'webLogo_large.png'
@@ -198,7 +213,7 @@ def delete_images(path: str = None):
 
     images = ['webLogo_large.png' ,'webSplashImage_large.png', 
     'squaredLogo_large.png', 'appSplashImage_large.png', 'appLogo_large.png', 
-    'favIcon_large.png', 'ingredientLogo_large.png']
+    'ingredientLogo_large.png']
 
     for image in images:
         if path: image = path + '/' + image
@@ -300,7 +315,7 @@ def zip_branding(source_url: str, zip_name: str, on_prem_source: bool):
     delete_images()
     delete_branding_json()
     success_txt = typer.style('SUCCESS: ', fg=typer.colors.GREEN, bold=True)
-    typer.echo(f'{success_txt} Stored branding from {source_url} in file branding.zip')
+    typer.echo(f'{success_txt} Stored branding from {source_url} in file {zip_name}')
 
 # function to upload branding from zip      
 def load_from_zip(zip_file: str, url: str, auth_header):

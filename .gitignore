@@ -17,3 +17,5 @@ branding_dev.py
 cli_dev.py
 /tmp
 /tmp/*
+/tests/*
+test_*.py
