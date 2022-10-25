@@ -38,11 +38,11 @@ Typer serves as the framework for the CLI, Pillow and resizeimage to handle imag
 
 To get started, just install the package via pip install
 ```
-python3 -m pip install dracoon-sprayer
+python3 -m pip install dcspray
 ```
 or 
 ```
-pip install dracoon-sprayer
+pip install dcspray
 ```
 
 
@@ -59,11 +59,11 @@ python3 --version
 
 1. Install the package from PyPi
 ```
-python3 -m pip install dracoon-sprayer
+python3 -m pip install dcspray
 ```
 or 
 ```
-pip install dracoon-sprayer
+pip install dcspray
 ```
 
 <!-- USAGE EXAMPLES -->
@@ -82,7 +82,7 @@ pip install dracoon-sprayer
 
 ### Quick start: spray (minimal setup)
 ```
-dracoon-sprayer spray SOURCE_URL TARGET_URL
+dcspray spray SOURCE_URL TARGET_URL
 ```
 Minimal usage requires providing a source url to download the branding from and a target url to 
 upload the copied branding.
@@ -96,33 +96,33 @@ Default configuration:
 #### Get help
 Using the help option provides a listing of all options and arguments:
 ```
-dracoon-sprayer spray --help
+dcspray spray --help
 ```
 
 #### Command Line Overview
 
 The CLI tool works as any other CLI tool:
 ```
-dracoon-sprayer spray [OPTIONS] SOURCE_URL TARGET_URL
+dcspray spray [OPTIONS] SOURCE_URL TARGET_URL
 ```
 
 #### Options (optional settings)
 
 ##### Copy full branding
 ```
-dracoon-sprayer spray --full-branding SOURCE_URL TARGET_URL
+dcspray spray --full-branding SOURCE_URL TARGET_URL
 ```
 To get a full branding including all texts, URLs and other meta information, use the --full-branding option.
 
 ##### Use custom OAuth app
 ```
-dracoon-sprayer  spray --full-branding --client-id someclientid --client-secret optionalsecret SOURCE_URL TARGET_URL
+dcspray  spray --full-branding --client-id someclientid --client-secret optionalsecret SOURCE_URL TARGET_URL
 ```
 To use a different OAuth app, provide a client id and a client secret via corresponding options --client-id and --client-secret.
 
 ##### Use custom OAuth app with authorization code flow
 ```
-dracoon-sprayer spray --full-branding --client-id someclientid --client-secret optionalsecret --auth-code SOURCE_URL TARGET_URL 
+dcspray spray --full-branding --client-id someclientid --client-secret optionalsecret --auth-code SOURCE_URL TARGET_URL 
 ```
 To use authorization code flow for your custom OAuth app, you first will need to ensure that
 * the authorization code flow is activated for the app
@@ -138,7 +138,7 @@ Paste the code into the CLI and authentication will be completed.
 ##### Get branding from on premises customer
 
 ```
-dracoon-sprayer spray --on-prem-source SOURCE_URL TARGET_URL
+dcspray spray --on-prem-source SOURCE_URL TARGET_URL
 ```
 
 #### Options overview
@@ -158,28 +158,28 @@ dracoon-sprayer spray --on-prem-source SOURCE_URL TARGET_URL
 
 ### Quick start: save
 ```
-dracoon-sprayer save SOURCE_URL
+dcspray save SOURCE_URL
 ```
 Minimal usage requires providing a source url to download the branding from.
 
 #### Get help
 Using the help option provides a listing of all options and arguments:
 ```
-dracoon-sprayer save --help
+dcspray save --help
 ```
 
 #### Command Line Overview
 
 The CLI tool works as any other CLI tool:
 ```
-dracoon-sprayer save [OPTIONS] SOURCE_URL
+dcspray save [OPTIONS] SOURCE_URL
 ```
 
 #### Options (optional settings)
 
 ##### Provide own zip file name (and path)
 ```
-dracoon-sprayer save --zip-name NAME_AND_OPTIONAL_ZIP_PATH SOURCE_URL TARGET_URL
+dcspray save --zip-name NAME_AND_OPTIONAL_ZIP_PATH SOURCE_URL TARGET_URL
 ```
 
 #### Options overview
@@ -193,7 +193,7 @@ dracoon-sprayer save --zip-name NAME_AND_OPTIONAL_ZIP_PATH SOURCE_URL TARGET_URL
 
 ### Quick start: load (minimal setup)
 ```
-dracoon-sprayer load ZIP_FILE TARGET_URL
+dcspray load ZIP_FILE TARGET_URL
 ```
 Minimal usage requires providing a zip file name (if no path: must be in current working directory, otherwise provide full path and name) containing a branding saved using the save cmommand in order to spray it to a target url.
 
@@ -206,27 +206,27 @@ Default configuration:
 #### Get help
 Using the help option provides a listing of all options and arguments:
 ```
-dracoon-sprayer load --help
+dcspray load --help
 ```
 
 #### Command Line Overview
 
 The CLI tool works as any other CLI tool:
 ```
-dracoon-sprayer load [OPTIONS] ZIP_FILE TARGET_URL
+dcspray load [OPTIONS] ZIP_FILE TARGET_URL
 ```
 
 #### Options (optional settings)
 
 ##### Use custom OAuth app
 ```
-dracoon-sprayer load --client-id someclientid --client-secret optionalsecret ZIP_FILE TARGET_URL
+dcspray load --client-id someclientid --client-secret optionalsecret ZIP_FILE TARGET_URL
 ```
 To use a different OAuth app, provide a client id and a client secret via corresponding options --client-id and --client-secret.
 
 ##### Use custom OAuth app with authorization code flow
 ```
-dracoon-sprayer load --client-id someclientid --client-secret optionalsecret --auth-code ZIP_FILE TARGET_URL 
+dcspray load --client-id someclientid --client-secret optionalsecret --auth-code ZIP_FILE TARGET_URL 
 ```
 To use authorization code flow for your custom OAuth app, you first will need to ensure that
 * the authorization code flow is activated for the app
