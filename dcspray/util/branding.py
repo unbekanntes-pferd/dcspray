@@ -2,7 +2,7 @@ import json
 from typing import List
 from requests import get, post, put, RequestException
 import re
-from dracoonsprayer.util.models import Branding, BrandingUpload
+from dcspray.util.models import Branding, BrandingUpload
 from PIL import Image
 from resizeimage import resizeimage
 import typer

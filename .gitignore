@@ -1,21 +1,13 @@
-# ignore Python cache and build files for package
+# Python cache and VS Code
 /.vscode
-/setup.py
-/__pycache__
-/dracoonsprayer/__pycache__
-/dracoonsprayer/util/models/__pycache__
-/build
+__pycache__
+
+# builds
 /dist
+
+# OS tmp files
 /._.DS_Store
 /.DS_Store
+
+# virtual env 
 /.venv
-/dracoonsprayer/util/__pycache__
-/dracoonsprayer.egg-info
-/dracoon_sprayer.egg-info
-/dracoonsprayer/dracoonsprayer.egg-info
-branding_dev.py
-cli_dev.py
-/tmp
-/tmp/*
-/tests/*
-test_*.py

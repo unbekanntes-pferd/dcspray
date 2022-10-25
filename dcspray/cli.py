@@ -1,5 +1,5 @@
-from dracoonsprayer.util.branding import get_branding, delete_images, update_branding, upload_images, download_images, zip_branding, load_from_zip
-from dracoonsprayer.util.dracoon_auth import password_flow, auth_code_flow
+from dcspray.util.branding import get_branding, delete_images, update_branding, upload_images, download_images, zip_branding, load_from_zip
+from dcspray.util.dracoon_auth import password_flow, auth_code_flow
 from dracoon import core
 import typer
 
