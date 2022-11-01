@@ -1,7 +1,10 @@
-from dcspray.util.branding import get_branding, delete_images, update_branding, upload_images, download_images, zip_branding, load_from_zip
-from dcspray.util.dracoon_auth import password_flow, auth_code_flow
-from dracoon import core
+import asyncio
 import typer
+
+from dcspray.util.branding import get_branding, delete_images, update_branding, upload_images, download_images, zip_branding, load_from_zip
+from dcspray.util.auth import password_flow, auth_code_flow
+
+
 
 app = typer.Typer()
 
@@ -127,7 +130,10 @@ def save(source_url: str = typer.Argument(..., help='Source DRACOON instance to 
     """
     Downloads a DRACOON branding as a zip file containing all required images and JSON payload.
     """
-    zip_branding(source_url, zip_name, on_prem_source)
+    async def _save():
+        await zip_branding(source_url, zip_name, on_prem_source)
+    
+    asyncio.run(_save())
 
 @app.command()
 def load(zip_file: str = typer.Argument(..., help='Zip file with DRACOON branding to upload.'), 
@@ -141,35 +147,27 @@ def load(zip_file: str = typer.Argument(..., help='Zip file with DRACOON brandin
     """
     Uploads a DRACOON branding from a zip file to a target DRACOON instance.
     """
-    # use password flow if not client secret provided
-    if client_secret == None: 
-        auth_code = False
-        typer.echo('No client secret provided.')
-        typer.echo(' Using password flow ...')
-        
-    # use password flow as default
-    if not auth_code:
-        username = typer.prompt('Please enter username')
-        password = typer.prompt('Please enter password', hide_input=True)
-        auth_header = password_flow(client_id=client_id, 
-            client_secret=client_secret, username=username, password=password, target_url=target_url)
-    # use auth code flow 
-    else: 
-        my_dracoon = core.Dracoon(clientID=client_id, clientSecret=client_secret)
-        my_dracoon.set_URLs(target_url)
-        typer.launch(my_dracoon.get_code_url())
-        auth_code = typer.prompt('Paste authorization code')
-        auth_header = auth_code_flow(client_id=client_id, 
-                                    client_secret=client_secret, target_url=target_url, code=auth_code)
 
-    load_from_zip(zip_file, target_url, auth_header)
+    async def _load(auth_code: bool = False):
+        # use password flow if not client secret provided
+        if client_secret == None: 
+            auth_code = False
+            typer.echo('No client secret provided.')
+            typer.echo(' Using password flow.')
+            
+        # use password flow as default
+        if not auth_code:
+            dracoon = await password_flow(client_id=client_id, client_secret=client_secret, target_url=target_url)
+
+
+        dracoon = await auth_code_flow(client_id=client_id, client_secret=client_secret, target_url=target_url)
+
+        await load_from_zip(dracoon=dracoon, zip_file=zip_file)
+        
+    asyncio.run(_load(auth_code=auth_code))
+
+
 
 # run main function
 if __name__ == '__main__':
     app()
-    
-
-
-
-
-

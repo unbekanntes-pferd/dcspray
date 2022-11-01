@@ -11,3 +11,5 @@ __pycache__
 
 # virtual env 
 /.venv
+test*.py
+*_large.png
