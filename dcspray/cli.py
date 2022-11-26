@@ -11,7 +11,7 @@ from dcspray.util.branding import (
     load_from_zip,
     spray_branding
 )
-from dcspray.util.auth import password_flow, auth_code_flow
+from dcspray.util.auth import password_flow, auth_code_flow, add_https_protocol, verify_dracoon_url
 
 
 app = typer.Typer()
@@ -51,6 +51,13 @@ def spray(
 
     async def _spray(auth_code: bool = False):
         # use password flow if not client secret provided
+
+        parsed_source_url = add_https_protocol(url=source_url)
+        await verify_dracoon_url(url=parsed_source_url)
+
+        parsed_target_url = add_https_protocol(url=target_url)
+        await verify_dracoon_url(url=parsed_target_url)
+
         if client_secret == None:
             auth_code = False
             typer.echo("No client secret provided.")
@@ -59,14 +66,14 @@ def spray(
         # use password flow as default
         if not auth_code:
             dracoon = await password_flow(
-                client_id=client_id, client_secret=client_secret, target_url=target_url
+                client_id=client_id, client_secret=client_secret, target_url=parsed_target_url
             )
         else:
             dracoon = await auth_code_flow(
-                client_id=client_id, client_secret=client_secret, target_url=target_url
+                client_id=client_id, client_secret=client_secret, target_url=parsed_target_url
             )
         
-        await spray_branding(source_url=source_url, target_dracoon=dracoon)
+        await spray_branding(source_url=parsed_source_url, target_dracoon=dracoon)
 
     asyncio.run(_spray())
 
@@ -89,7 +96,9 @@ def save(
     """
 
     async def _save():
-        await zip_branding(source_url, zip_name, on_prem_source)
+        parsed_source_url = add_https_protocol(url=source_url)
+        await verify_dracoon_url(url=parsed_source_url)
+        await zip_branding(parsed_source_url, zip_name, on_prem_source)
 
     asyncio.run(_save())
 
@@ -119,6 +128,10 @@ def load(
     """
 
     async def _load(auth_code: bool = False):
+
+        parsed_target_url = add_https_protocol(url=target_url)
+        await verify_dracoon_url(url=parsed_target_url)
+
         # use password flow if not client secret provided
         if client_secret == None:
             auth_code = False
@@ -128,11 +141,11 @@ def load(
         # use password flow as default
         if not auth_code:
             dracoon = await password_flow(
-                client_id=client_id, client_secret=client_secret, target_url=target_url
+                client_id=client_id, client_secret=client_secret, target_url=parsed_target_url
             )
         else:
             dracoon = await auth_code_flow(
-                client_id=client_id, client_secret=client_secret, target_url=target_url
+                client_id=client_id, client_secret=client_secret, target_url=parsed_target_url
             )
 
         await load_from_zip(dracoon=dracoon, zip_file=zip_file)

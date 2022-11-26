@@ -370,7 +370,7 @@ async def load_from_zip(dracoon: DRACOON, zip_file: str):
         typer.echo(f"{error_txt}Could not update branding.")
         sys.exit(1)
     finally:
-        delete_images(images=image_downloads)
+        if image_downloads: delete_images(images=image_downloads)
         delete_branding_json()
 
     success_txt = typer.style("SUCCESS: ", fg=typer.colors.GREEN, bold=True)
@@ -407,9 +407,9 @@ def make_branding_payload(public_branding_dict: Any, image_reqs: List[SimpleImag
 async def spray_branding(source_url: str, target_dracoon: DRACOON, on_prem_source: bool = False):
     """ spray a public branding to a target DRACOON """
     source_dracoon = init_public_dracoon(url=source_url, on_prem_source=on_prem_source)
+    # fetch public source branding / images
+    branding = await get_branding(dracoon=source_dracoon)
     try:
-        # fetch public source branding / images
-        branding = await get_branding(dracoon=source_dracoon)
         image_downloads = await download_images(dracoon=source_dracoon)
 
         # upload images
@@ -430,7 +430,7 @@ async def spray_branding(source_url: str, target_dracoon: DRACOON, on_prem_sourc
         sys.exit(1)
 
     finally:
-        delete_images(images=image_downloads)
+        if image_downloads: delete_images(images=image_downloads)
         await source_dracoon.client.disconnect()
 
     success_txt = typer.style("SUCCESS:", fg=typer.colors.GREEN, bold=True)
