@@ -1,3 +1,5 @@
+import sys
+
 import typer
 from dracoon import DRACOON, OAuth2ConnectionType
 from dracoon.errors import HTTPUnauthorizedError, DRACOONHttpError
@@ -18,12 +20,12 @@ async def password_flow(target_url: str, client_id: str, client_secret: str = No
         error_txt = typer.style('Error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
         typer.echo(f'{error_txt} Unauthorized (wrong credentials / client?): {err.error.response.status_code}')
         await dracoon.client.disconnect()
-        typer.Abort()
+        sys.exit(1)
     except DRACOONHttpError as err:
         error_txt = typer.style('Error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
         typer.echo(f'{error_txt} Authentication errror: {err.error.response.status_code}')
         await dracoon.client.disconnect()
-        typer.Abort()
+        sys.exit(1)
 
     return dracoon
     
@@ -40,11 +42,11 @@ async def auth_code_flow(client_id: str,  client_secret: str, target_url: str):
         error_txt = typer.style('Error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
         typer.echo(f'{error_txt} Unauthorized (wrong code / client?): {err.error.response.status_code}')
         await dracoon.client.disconnect()
-        typer.Abort()
+        sys.exit(1)
     except DRACOONHttpError as err:
         error_txt = typer.style('Error: ', bg=typer.colors.RED, fg=typer.colors.WHITE)
         typer.echo(f'{error_txt} Authentication errror: {err.error.response.status_code}')
         await dracoon.client.disconnect()
-        typer.Abort()
+        sys.exit(1)
 
     return dracoon
