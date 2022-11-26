@@ -11,6 +11,7 @@ import typer
 
 
 from PIL import Image
+from pydantic import ValidationError
 from resizeimage import resizeimage
 
 from dracoon import DRACOON
@@ -33,71 +34,26 @@ class ImageDownload:
     image_type: ImageType
 
 
-# helper to validate DRACOON version string
-def validate_dracoon_version(version_string: str):
-    version_string = version_string[:4]
-
-    version = version_string.split(".")
-
-    version_numbers = []
-
-    for number in version:
-        version_numbers.append(int(number))
-
-    return version_numbers[0] == 4 and version_numbers[1] >= 19
-
-
-# validate DRACOON url
-def validate_dracoon_url(dracoon_url: str):
-
-    # validate if correct url format
-    valid_url = re.compile(
-        r"^(?:https)?://"  # https://
-        r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?))"  # domain...
-        r"(?:/?|[/?]\S+)$",
-        re.IGNORECASE,
-    )
-
-    if re.match(valid_url, dracoon_url):
-        # validate if real DRACOON instance
-        dracoon_version_url = dracoon_url + "/api/v4/public/software/version"
-        try:
-            version_response = get(dracoon_version_url)
-            if version_response and "restApiVersion" in version_response.json():
-                version_string = version_response.json()["restApiVersion"]
-            else:
-                error_txt = typer.style(
-                    "Connection error: ", bg=typer.colors.RED, fg=typer.colors.WHITE
-                )
-                typer.echo(f"{error_txt} Incompatible DRACOON version.")
-                return False
-
-        except RequestException as e:
-            error_txt = typer.style(
-                "Connection error: ", bg=typer.colors.RED, fg=typer.colors.WHITE
-            )
-            typer.echo(f"{error_txt} no connection to {dracoon_url} possible.")
-            return False
-
-        # finalize by validating if compatible version (>= 4.19)
-        return validate_dracoon_version(version_string)
-
-    else:
-        return False
-
-
 async def get_branding(dracoon: DRACOON) -> CacheableBrandingResponse:
     """get a public branding from a DRACOON instance"""
 
     try:
         branding = await dracoon.public.branding.get_public_branding()
     except DRACOONHttpError as err:
-        error_txt = typer.style("Error: ", bg=typer.colors.RED, fg=typer.colors.WHITE)
+        error_txt = typer.style("Error:", bg=typer.colors.RED, fg=typer.colors.WHITE)
         typer.echo(
             f"{error_txt} Getting branding failed: {err.error.response.status_code}"
         )
         await dracoon.client.disconnect()
         sys.exit(1)
+    except ValidationError:
+        error_txt = typer.style("Error:", bg=typer.colors.RED, fg=typer.colors.WHITE)
+        typer.echo(
+            f"{error_txt} Getting branding failed: Invalid DRACOON version."
+        )
+        await dracoon.client.disconnect()
+        sys.exit(1)
+
 
     return branding
 
@@ -151,7 +107,7 @@ async def download_images(dracoon: DRACOON, path: str = None) -> List[ImageDownl
 
             except DRACOONHttpError as err:
                 error_txt = typer.style(
-                    "Error: ", bg=typer.colors.RED, fg=typer.colors.WHITE
+                    "Error:", bg=typer.colors.RED, fg=typer.colors.WHITE
                 )
                 typer.echo(
                     f"{error_txt} Download branding image failed: {err.error.response.status_code}"
@@ -219,7 +175,7 @@ async def upload_images(images: List[ImageDownload], dracoon: DRACOON) -> List[S
         images, len(images), label="Uploading branding images"
     ) as progress:
 
-        for img in images:
+        for img in progress:
             path = img.file_path
             check_path = Path(path)
             if not check_path.exists() or not check_path.is_file():
@@ -231,14 +187,14 @@ async def upload_images(images: List[ImageDownload], dracoon: DRACOON) -> List[S
                 image_reqs.append(SimpleImageRequest(id=upload.id, type=img.image_type))
             except HTTPForbiddenError:
                 error_txt = typer.style(
-                    "Error: ", bg=typer.colors.RED, fg=typer.colors.WHITE
+                    "Error:", bg=typer.colors.RED, fg=typer.colors.WHITE
                 )
                 typer.echo(f"{error_txt} Config Manager role required (Forbidden).")
                 await dracoon.logout()
                 sys.exit(1)
             except DRACOONHttpError as err:
                 error_txt = typer.style(
-                    "Error: ", bg=typer.colors.RED, fg=typer.colors.WHITE
+                    "Error:", bg=typer.colors.RED, fg=typer.colors.WHITE
                 )
                 typer.echo(
                     f"{error_txt} Upload failed: {err.error.response.status_code}"
@@ -288,12 +244,12 @@ async def update_branding(dracoon: DRACOON, branding_upload: UpdateBrandingReque
     try:
         update = await dracoon.branding.update_branding(branding_update=branding_upload)
     except HTTPForbiddenError:
-        error_txt = typer.style("Error: ", bg=typer.colors.RED, fg=typer.colors.WHITE)
+        error_txt = typer.style("Error:", bg=typer.colors.RED, fg=typer.colors.WHITE)
         typer.echo(f"{error_txt} Config Manager role required (Forbidden).")
         await dracoon.logout()
         sys.exit(1)
     except DRACOONHttpError as err:
-        error_txt = typer.style("Error: ", bg=typer.colors.RED, fg=typer.colors.WHITE)
+        error_txt = typer.style("Error:", bg=typer.colors.RED, fg=typer.colors.WHITE)
         typer.echo(f"{error_txt} Upload failed: {err.error.response.status_code}")
         await dracoon.logout()
         sys.exit(1)
@@ -371,7 +327,7 @@ async def load_from_zip(dracoon: DRACOON, zip_file: str):
 
         if not is_valid_zip(file_names=branding_files):
             error_txt = typer.style(
-                "Format error: ", bg=typer.colors.RED, fg=typer.colors.WHITE
+                "Format error:", bg=typer.colors.RED, fg=typer.colors.WHITE
             )
             typer.echo(f"{error_txt}Invalid branding zip file format.")
             sys.exit(1)
@@ -424,7 +380,7 @@ async def load_from_zip(dracoon: DRACOON, zip_file: str):
 
 
 def make_branding_payload(public_branding_dict: Any, image_reqs: List[SimpleImageRequest]) -> UpdateBrandingRequest:
-
+        """ create update payload from public branding """
         # parse colors (only normal color required)
         for color in public_branding_dict["colors"]:
             color["colorDetails"] = [
@@ -449,6 +405,7 @@ def make_branding_payload(public_branding_dict: Any, image_reqs: List[SimpleImag
 
 
 async def spray_branding(source_url: str, target_dracoon: DRACOON, on_prem_source: bool = False):
+    """ spray a public branding to a target DRACOON """
     source_dracoon = init_public_dracoon(url=source_url, on_prem_source=on_prem_source)
     try:
         # fetch public source branding / images
@@ -468,7 +425,7 @@ async def spray_branding(source_url: str, target_dracoon: DRACOON, on_prem_sourc
         )
 
     except DRACOONHttpError:
-        error_txt = typer.style("Error: ", bg=typer.colors.RED, fg=typer.colors.WHITE)
+        error_txt = typer.style("Error:", bg=typer.colors.RED, fg=typer.colors.WHITE)
         typer.echo(f"{error_txt}Could not update branding.")
         sys.exit(1)
 
@@ -476,7 +433,7 @@ async def spray_branding(source_url: str, target_dracoon: DRACOON, on_prem_sourc
         delete_images(images=image_downloads)
         await source_dracoon.client.disconnect()
 
-    success_txt = typer.style("SUCCESS: ", fg=typer.colors.GREEN, bold=True)
+    success_txt = typer.style("SUCCESS:", fg=typer.colors.GREEN, bold=True)
     typer.echo(f"{success_txt} Sprayed branding from {source_url} to target {target_dracoon.client.base_url}")
 
 
